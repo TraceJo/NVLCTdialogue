@@ -1,8 +1,8 @@
 {
-    "name": "Requiem Theme Helper",
+    "name": "NVLCT Dialogue Theme Helper",
     "author": "NvrrrB",
-    "description": "Complemento para mi theme",
-    "version": "1.0.0",
+    "description": "Ayudante dinámico para el tema Requiem/NVLCT. Aplica el avatar del personaje a los mensajes.",
+    "version": "1.0.1",
     "scripts": [
         "index.js"
     ]
