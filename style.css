@@ -1,0 +1,39 @@
+/* Avatar dinámico para personajes */
+.mes[is_user="false"] q::before {
+    background-image: var(--dynamic-char-avatar) !important;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Mejoras de visualización para el tema Requiem */
+.ch_name {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.mes_block {
+    transition: box-shadow 0.3s ease;
+}
+
+.mes_block:hover {
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* Ajustes para móviles */
+@media (max-width: 768px) {
+    .mes_block {
+        padding: 1em;
+    }
+    
+    .mes q {
+        padding-left: 50px;
+    }
+    
+    .mes q::before {
+        width: 40px;
+        height: 40px;
+        left: 0.3em;
+    }
+}
