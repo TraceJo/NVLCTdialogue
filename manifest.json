@@ -1,5 +1,9 @@
 {
     "name": "NVLCT Dialogue Theme Helper",
+    "loading_order": 1,
+    "requires": [],
+    "optional": [],
+    "dependencies": [],
     "author": "NvrrrB",
     "version": "1.0.1",
     "homePage": "https://github.com/TraceJo/NVLCTdialogue",
