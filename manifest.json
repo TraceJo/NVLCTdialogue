@@ -1,14 +1,16 @@
+
 {
-    "display_name": "Requiem Theme Extension",
-    "loading_order": 10,
+    "display_name": "Avatar Dynamic Injector",
+    "loading_order": 1,
     "requires": [],
     "optional": [],
-    "dependencies": [],
     "js": "index.js",
     "css": "style.css",
-    "author": "NvrrrrB",
+    "author": "NvrrrB",
     "version": "1.0.0",
     "homePage": "https://github.com/TraceJo/NVLCTdialogue",
-    "auto_update": true,
-    "i18n": {}
+    "auto_update": {
+        "source": "github",
+        "url": "https://github.com/TraceJo/NVLCTdialogue"
+    }
 }
