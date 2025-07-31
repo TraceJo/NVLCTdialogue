@@ -6,40 +6,102 @@
     let currentCharacterAvatar = '';
     let currentUserAvatar = '';
 
+    // Función para convertir URL de thumbnail a URL completa
+    function convertThumbnailToFullUrl(thumbnailUrl) {
+        if (!thumbnailUrl) {
+            return '';
+        }
+
+        // Si ya es una URL completa, devolverla
+        if (thumbnailUrl.startsWith('http') || !thumbnailUrl.includes('/thumbnail?')) {
+            return thumbnailUrl;
+        }
+
+        try {
+            // Parsear la URL de thumbnail
+            const urlParts = thumbnailUrl.split('?')[1];
+            const params = new URLSearchParams(urlParts);
+            const type = params.get('type');
+            const file = params.get('file');
+
+            console.log('Detectado avatar:', { type, file, originalUrl: thumbnailUrl });
+
+            if (!type || !file) {
+                return thumbnailUrl;
+            }
+
+            // Convertir según el tipo
+            if (type === 'avatar') {
+                // Avatar de personaje - usar la ruta directa
+                const fullUrl = `/characters/${file}`;
+                console.log('Avatar de personaje convertido:', fullUrl);
+                return fullUrl;
+            } else if (type === 'persona') {
+                // Avatar de usuario/persona
+                if (file === 'user-default.png') {
+                    console.log('Avatar de usuario por defecto ignorado');
+                    return ''; // No usar el avatar por defecto
+                }
+                const fullUrl = `/User Avatars/${file}`;
+                console.log('Avatar de usuario convertido:', fullUrl);
+                return fullUrl;
+            }
+
+            return thumbnailUrl;
+        } catch (error) {
+            console.warn('Error convirtiendo URL de thumbnail:', error, thumbnailUrl);
+            return thumbnailUrl;
+        }
+    }
+
     // Función para obtener la URL del avatar del personaje actual
     function getCurrentCharacterAvatar() {
         try {
-            // Verificar si existe un personaje seleccionado
-            if (typeof window.this_chid === 'undefined' || window.this_chid === null) {
-                return '';
-            }
-
-            // Método 1: Buscar en el DOM el avatar visible
-            const avatarImg = document.querySelector('.avatar.main-avatar');
-            if (avatarImg && avatarImg.src && avatarImg.src !== 'undefined' && !avatarImg.src.includes('thumbnail')) {
-                return `url("${avatarImg.src}")`;
-            }
-
-            // Método 2: Buscar en el contenedor de mensajes
-            const charAvatar = document.querySelector('.mesAvatarWrapper .avatar img');
-            if (charAvatar && charAvatar.src && charAvatar.src !== 'undefined' && !charAvatar.src.includes('thumbnail')) {
-                return `url("${charAvatar.src}")`;
-            }
-
-            // Método 3: Buscar cualquier imagen de avatar de personaje válida
-            const anyCharAvatar = document.querySelector('.ch_img img, img[src*="characters/"]');
-            if (anyCharAvatar && anyCharAvatar.src && anyCharAvatar.src !== 'undefined' && !anyCharAvatar.src.includes('thumbnail')) {
-                return `url("${anyCharAvatar.src}")`;
-            }
-
-            // Método 4: Usar la API de ST si está disponible
-            if (window.characters && window.characters[window.this_chid] && window.characters[window.this_chid].avatar) {
-                const avatarPath = window.characters[window.this_chid].avatar;
-                if (avatarPath && !avatarPath.includes('thumbnail') && !avatarPath.includes('user-default')) {
-                    return `url("characters/${avatarPath}")`;
+            console.log('Buscando avatar de personaje...');
+            
+            // Método 1: Buscar específicamente avatares con type=avatar
+            const avatarImages = document.querySelectorAll('img[src*="type=avatar"]');
+            console.log('Encontradas imágenes de avatar:', avatarImages.length);
+            
+            for (let img of avatarImages) {
+                if (img && img.src && img.src.includes('type=avatar')) {
+                    const fullUrl = convertThumbnailToFullUrl(img.src);
+                    console.log('Procesando avatar:', img.src, '->', fullUrl);
+                    if (fullUrl && fullUrl !== '' && !fullUrl.includes('user-default')) {
+                        console.log('Avatar de personaje encontrado:', fullUrl);
+                        return `url("${fullUrl}")`;
+                    }
                 }
             }
 
+            // Método 2: Buscar en mensajes del personaje más recientes
+            const charMessages = document.querySelectorAll('.mes[is_user="false"] .mesAvatarWrapper .avatar img');
+            console.log('Mensajes de personaje encontrados:', charMessages.length);
+            
+            for (let i = charMessages.length - 1; i >= 0; i--) {
+                const img = charMessages[i];
+                if (img && img.src) {
+                    console.log('Revisando mensaje de personaje:', img.src);
+                    const fullUrl = convertThumbnailToFullUrl(img.src);
+                    if (fullUrl && fullUrl !== '' && !fullUrl.includes('user-default')) {
+                        console.log('Avatar de personaje desde mensaje:', fullUrl);
+                        return `url("${fullUrl}")`;
+                    }
+                }
+            }
+
+            // Método 3: Usar la API de ST si está disponible
+            if (window.characters && window.this_chid !== undefined && window.characters[window.this_chid] && window.characters[window.this_chid].avatar) {
+                const avatarPath = window.characters[window.this_chid].avatar;
+                console.log('Avatar desde API de ST:', avatarPath);
+                if (avatarPath && !avatarPath.includes('user-default')) {
+                    const fullUrl = `/characters/${avatarPath}`;
+                    console.log('Avatar desde API convertido:', fullUrl);
+                    return `url("${fullUrl}")`;
+                }
+            }
+
+            console.log('No se encontró avatar de personaje');
             return '';
         } catch (error) {
             console.warn('Error obteniendo avatar del personaje:', error);
@@ -50,25 +112,48 @@
     // Función para obtener la URL del avatar del usuario
     function getCurrentUserAvatar() {
         try {
-            // Método 1: Buscar imagen de usuario en el DOM
-            const userAvatarImg = document.querySelector('img[src*="User Avatars"]:not([src*="thumbnail"]):not([src*="user-default"])');
-            if (userAvatarImg && userAvatarImg.src && userAvatarImg.src !== 'undefined') {
-                return `url("${userAvatarImg.src}")`;
+            console.log('Buscando avatar de usuario...');
+            
+            // Método 1: Buscar específicamente avatares con type=persona
+            const personaImages = document.querySelectorAll('img[src*="type=persona"]');
+            console.log('Encontradas imágenes de persona:', personaImages.length);
+            
+            for (let img of personaImages) {
+                if (img && img.src && img.src.includes('type=persona')) {
+                    const fullUrl = convertThumbnailToFullUrl(img.src);
+                    console.log('Procesando persona:', img.src, '->', fullUrl);
+                    if (fullUrl && fullUrl !== '' && !fullUrl.includes('user-default')) {
+                        console.log('Avatar de usuario encontrado:', fullUrl);
+                        return `url("${fullUrl}")`;
+                    }
+                }
             }
 
-            // Método 2: Usar la configuración si está disponible
+            // Método 2: Buscar en mensajes del usuario más recientes
+            const userMessages = document.querySelectorAll('.mes[is_user="true"] .mesAvatarWrapper .avatar img');
+            console.log('Mensajes de usuario encontrados:', userMessages.length);
+            
+            for (let i = userMessages.length - 1; i >= 0; i--) {
+                const img = userMessages[i];
+                if (img && img.src) {
+                    console.log('Revisando mensaje de usuario:', img.src);
+                    const fullUrl = convertThumbnailToFullUrl(img.src);
+                    if (fullUrl && fullUrl !== '' && !fullUrl.includes('user-default')) {
+                        console.log('Avatar de usuario desde mensaje:', fullUrl);
+                        return `url("${fullUrl}")`;
+                    }
+                }
+            }
+
+            // Método 3: Usar la configuración si está disponible
             if (window.power_user && window.power_user.user_avatar && 
-                !window.power_user.user_avatar.includes('thumbnail') && 
                 !window.power_user.user_avatar.includes('user-default')) {
-                return `url("User Avatars/${window.power_user.user_avatar}")`;
+                const fullUrl = `/User Avatars/${window.power_user.user_avatar}`;
+                console.log('Avatar de usuario desde configuración:', fullUrl);
+                return `url("${fullUrl}")`;
             }
 
-            // Método 3: Buscar cualquier avatar de usuario válido
-            const anyUserAvatar = document.querySelector('img[src*="/User Avatars/"]:not([src*="thumbnail"]):not([src*="user-default"])');
-            if (anyUserAvatar && anyUserAvatar.src && anyUserAvatar.src !== 'undefined') {
-                return `url("${anyUserAvatar.src}")`;
-            }
-
+            console.log('No se encontró avatar de usuario');
             return '';
         } catch (error) {
             console.warn('Error obteniendo avatar del usuario:', error);
@@ -78,30 +163,55 @@
 
     // Función para inyectar las variables CSS
     function injectAvatarVariables() {
+        console.log('=== Iniciando actualización de avatares ===');
+        
         const charAvatar = getCurrentCharacterAvatar();
         const userAvatar = getCurrentUserAvatar();
 
-        // Solo actualizar si hay cambios
-        if (charAvatar !== currentCharacterAvatar || userAvatar !== currentUserAvatar) {
-            currentCharacterAvatar = charAvatar;
-            currentUserAvatar = userAvatar;
+        console.log('Avatares obtenidos:', {
+            character: charAvatar,
+            user: userAvatar,
+            previousCharacter: currentCharacterAvatar,
+            previousUser: currentUserAvatar
+        });
 
-            // Inyectar las variables CSS en el documento
-            const root = document.documentElement;
-            
+        // Siempre inyectar las variables, aunque sean vacías
+        const root = document.documentElement;
+        
+        // Actualizar avatar de personaje
+        if (charAvatar !== currentCharacterAvatar) {
+            currentCharacterAvatar = charAvatar;
             if (charAvatar) {
                 root.style.setProperty('--dynamic-char-avatar', charAvatar);
+                console.log('✅ Avatar de personaje actualizado:', charAvatar);
+            } else {
+                root.style.removeProperty('--dynamic-char-avatar');
+                console.log('❌ Avatar de personaje removido');
             }
-            
+        }
+        
+        // Actualizar avatar de usuario
+        if (userAvatar !== currentUserAvatar) {
+            currentUserAvatar = userAvatar;
             if (userAvatar) {
                 root.style.setProperty('--dynamic-user-avatar', userAvatar);
+                console.log('✅ Avatar de usuario actualizado:', userAvatar);
+            } else {
+                root.style.removeProperty('--dynamic-user-avatar');
+                console.log('❌ Avatar de usuario removido');
             }
-
-            console.log('Avatares actualizados:', {
-                character: charAvatar,
-                user: userAvatar
-            });
         }
+
+        // Verificar las variables inyectadas
+        const injectedCharAvatar = getComputedStyle(root).getPropertyValue('--dynamic-char-avatar').trim();
+        const injectedUserAvatar = getComputedStyle(root).getPropertyValue('--dynamic-user-avatar').trim();
+        
+        console.log('Variables CSS verificadas:', {
+            '--dynamic-char-avatar': injectedCharAvatar,
+            '--dynamic-user-avatar': injectedUserAvatar
+        });
+        
+        console.log('=== Fin actualización de avatares ===');
     }
 
     // Función para observar cambios en el chat
@@ -112,7 +222,7 @@
             return;
         }
 
-        // Observer para detectar nuevos mensajes
+        // Observer para detectar nuevos mensajes y cambios en avatares
         const observer = new MutationObserver(function(mutations) {
             let shouldUpdate = false;
             
@@ -127,11 +237,19 @@
                             }
                         });
                     }
+                    
+                    // Detectar cambios en atributos de imágenes (especialmente src)
+                    if (mutation.type === 'attributes' && 
+                        mutation.attributeName === 'src' && 
+                        mutation.target.tagName === 'IMG' &&
+                        mutation.target.closest('.mesAvatarWrapper')) {
+                        shouldUpdate = true;
+                    }
                 });
 
                 if (shouldUpdate) {
                     // Usar un timeout más largo para evitar conflictos
-                    setTimeout(injectAvatarVariables, 300);
+                    setTimeout(injectAvatarVariables, 500);
                 }
             } catch (error) {
                 console.warn('Error en observer de chat:', error);
@@ -140,7 +258,9 @@
 
         observer.observe(chatContainer, {
             childList: true,
-            subtree: true
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['src']
         });
 
         console.log('Observer de chat iniciado');
