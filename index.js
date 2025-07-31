@@ -1,50 +1,45 @@
-// --- index.js CONSISTENTE Y CON DEPURACIÓN ---
+// --- index.js FINAL Y CORRECTO ---
 class NVLCTDialogueThemeHelper extends SillyTavern.Extension {
     constructor() {
-        // 'super' llama al constructor base. Lo hacemos coincidir con el nombre de la carpeta.
         super('nvlct-dialogue-helper'); 
-        
-        // Metadatos que se mostrarán en la UI de extensiones
-        this.name = 'NVLCT Dialogue Theme Helper'; // Coincide con el manifest
+        this.name = 'NVLCT Dialogue Theme Helper';
         this.description = 'Ayudante dinámico para el tema Requiem/NVLCT. Aplica el avatar del personaje a los mensajes.';
     }
 
     onNewMessage(message) {
-        console.log('[Theme Helper] Procesando nuevo mensaje:', message);
-        
-        // RECUERDA: Si sigue sin funcionar, el problema es este selector.
-        // Usa F12 -> Inspeccionar para encontrar el ID o clase correctos.
-        const selector = '#char-img img'; 
-        const charAvatarElement = document.querySelector(selector);
-        
-        if (!charAvatarElement) {
-            console.error(`[Theme Helper] ¡FALLO! No se encontró ningún elemento con el selector: "${selector}".`);
-            return;
-        }
-
-        const charAvatarUrl = charAvatarElement.src;
-
-        if (!charAvatarUrl) {
-            console.warn('[Theme Helper] Se encontró el elemento, pero no tiene una URL (atributo src).');
-            return;
-        }
-        
+        // Solo nos interesan los mensajes del personaje.
         const isCharMessage = message.getAttribute('is_user') === 'false';
+        if (!isCharMessage) {
+            return; // Si es un mensaje de usuario, no hacemos nada.
+        }
 
-        if (isCharMessage) {
-            message.style.setProperty('--dynamic-char-avatar', `url("${charAvatarUrl}")`);
-            console.log('[Theme Helper] ¡ÉXITO! Variable de CSS aplicada al mensaje.');
+        // --- ESTA ES LA LÍNEA CLAVE ---
+        // Buscamos la imagen del avatar DENTRO del mensaje que se acaba de crear.
+        const avatarImg = message.querySelector('.avatar img');
+
+        // Si no encontramos la imagen por alguna razón, salimos para evitar errores.
+        if (!avatarImg) {
+            return;
+        }
+
+        // Obtenemos la URL de la imagen que encontramos.
+        const avatarUrl = avatarImg.src;
+
+        // Si la URL existe, la aplicamos a nuestra variable CSS para este mensaje.
+        if (avatarUrl) {
+            message.style.setProperty('--dynamic-char-avatar', `url("${avatarUrl}")`);
         }
     }
 
     onReady() {
         console.log('[Theme Helper] Extensión activa y lista.');
         
+        // Ejecutamos la lógica para todos los mensajes que ya están en el chat al cargar.
         document.querySelectorAll('#chat .mes').forEach(message => {
             this.onNewMessage(message);
         });
     }
 }
 
-// Finalmente, registramos la extensión
+// Registramos la extensión.
 SillyTavern.registerExtension(new NVLCTDialogueThemeHelper());
